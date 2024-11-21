@@ -1,0 +1,14 @@
+﻿<Project Sdk="Godot.NET.Sdk/4.2.1">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>CardGame</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\language-ext\Samples\CardGame\CardGame.csproj"></ProjectReference>
+  </ItemGroup>
+
+</Project>
