@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://bkl5dd60825i7"]
+
+[ext_resource type="Script" path="res://PlayerScreen.cs" id="1_po577"]
+
+[node name="PlayerScreen" type="Node2D" node_paths=PackedStringArray("Proceed")]
+script = ExtResource("1_po577")
+Proceed = NodePath("Proceed")
+
+[node name="TextEdit" type="TextEdit" parent="."]
+offset_left = 21.0
+offset_top = 22.0
+offset_right = 269.0
+offset_bottom = 55.0
+
+[node name="Proceed" type="Button" parent="."]
+offset_left = 529.0
+offset_top = 548.0
+offset_right = 658.0
+offset_bottom = 597.0
+text = "Proceed
+"
