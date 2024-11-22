@@ -8,9 +8,9 @@ namespace CardGame;
 public partial class Main : Node
 {
 
-	private static readonly MinRT Runtime = new();
+	public static readonly MinRT Runtime = new();
 
-	private static readonly EnvIO EnvIO = EnvIO.New();
+	public static readonly EnvIO EnvIO = EnvIO.New();
 
 	public static Game<Unit> GAME = Game.unitM;
 

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cr62nspf8jbvy"]
+
+[ext_resource type="Script" path="res://MyButton.gd" id="1_drhto"]
+
+[node name="MyButton" type="Button"]
+script = ExtResource("1_drhto")
