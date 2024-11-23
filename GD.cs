@@ -6,12 +6,7 @@ namespace CardGame;
 
 public static class GDExtension
 {
-	public static IO<Unit> deferred(Action a) =>
-		lift(() => Callable.From(a).CallDeferred());
+	public static IO<Unit> deferred(Action a) => lift(() => Callable.From(a).CallDeferred());
 
-	public static IO<Unit> deferred(IO<Unit> io) =>
-		lift(() => Callable.From(() =>
-        {
-            io.Run();
-        }).CallDeferred());
+	public static IO<Unit> deferred(IO<Unit> io) =>	deferred(() => io.Run());
 }
