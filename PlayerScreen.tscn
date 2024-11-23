@@ -1,13 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://bkl5dd60825i7"]
+[gd_scene load_steps=2 format=3 uid="uid://bkl5dd60825i7"]
 
 [ext_resource type="Script" path="res://PlayerScreen.cs" id="1_po577"]
-[ext_resource type="PackedScene" uid="uid://cr62nspf8jbvy" path="res://MyButton.tscn" id="2_bhg0c"]
 
-[node name="PlayerScreen" type="Node2D" node_paths=PackedStringArray("Proceed")]
+[node name="PlayerScreen" type="Node2D" node_paths=PackedStringArray("Proceed", "Player1Name")]
 script = ExtResource("1_po577")
 Proceed = NodePath("Proceed")
+Player1Name = NodePath("Player1Name")
 
-[node name="TextEdit" type="TextEdit" parent="."]
+[node name="Player1Name" type="TextEdit" parent="."]
 offset_left = 21.0
 offset_top = 22.0
 offset_right = 269.0
@@ -19,12 +19,4 @@ offset_top = 548.0
 offset_right = 658.0
 offset_bottom = 597.0
 text = "Proceed
-"
-
-[node name="MyButton" parent="." instance=ExtResource("2_bhg0c")]
-offset_left = 627.0
-offset_top = 257.0
-offset_right = 842.0
-offset_bottom = 320.0
-text = "mybutton
 "
