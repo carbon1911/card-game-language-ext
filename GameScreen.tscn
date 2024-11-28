@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" path="res://GameScreen.cs" id="1_b2xyg"]
 
-[node name="GameScreen" type="Node2D"]
+[node name="GameScreen" type="Node2D" node_paths=PackedStringArray("Label")]
 script = ExtResource("1_b2xyg")
+Label = NodePath("Label")
 
 [node name="Label" type="Label" parent="."]
 offset_left = 74.0
