@@ -14,15 +14,24 @@ public partial class GameScreen : Node2D
 
 	private void _on_player_screen_correct_name(string name)
 	{
-		var ap = Game.addPlayer(name);
-
-		var run = 
-			from _ in OptionT.lift(GDExtension.deferred(() => Visible = true))
-			from res in OptionT.lift<IO, GameState>(ap.Run(GameState.Zero).Run().Map(o => o.State))
-			from label in OptionT.lift<IO, Label>(Optional(Label))
-			from _1 in OptionT.lift(GDExtension.deferred(() => label.Text = res.State.ToString()))
-			select unit;
-
-		run.Run().As().Run();
+		OnPlayerNameProvided(name).Run().As().Run().Ignore();
 	}
+	
+	private OptionT<IO, Unit> OnPlayerNameProvided(string name) =>
+		from res in OptionT.lift<IO, GameState>(InitGame(name).Run(GameState.Zero).Run().Map(o => o.State))
+		from label in OptionT.lift<IO, Label>(Optional(Label))
+		from _ in OptionT.lift(IO.lift(async () =>
+		{
+			Visible = true;
+			label.Text = $"'{name}' added to the game";
+			await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
+			label.Text += $"{System.Environment.NewLine}Let's play...";
+		}))
+		select unit;
+
+	private static Game<Unit> InitGame(string playerName) => Game.addPlayer(playerName) >> Deck.shuffle;
+
+	private static string GameStateToString(GameState gameState) =>
+		$"{nameof(GameState.State)}: {gameState.State}{System.Environment.NewLine}" +
+		$"{nameof(GameState.Deck)}: {gameState.Deck}";
 }
