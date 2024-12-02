@@ -37,15 +37,13 @@ public partial class PlayerScreen : Node2D
 		select unit;
 
 	private IO<Unit> HandlePlayerName(string name) =>
-		from n in Pure(name)
-		from _ in iff(notEmpty(n),
+		iff(notEmpty(name),
 			Then: IO.lift(() =>
 			{
 				Visible = false;
-				EmitSignal(SignalName.CorrectName, n);
+				EmitSignal(SignalName.CorrectName, name);
 			}),
-			Else: IO.lift(() => GD.Print("Name is empty"))).As()
-		select unit;
+			Else: IO.lift(() => GD.Print("Name is empty"))).As();
 
 	private static Producer<string, Eff<MinRT>, Unit> SetUpProceedButtonEvent(Button btn, Func<string> player1NameProvider) =>
 		from rtime in runtime<MinRT>()
