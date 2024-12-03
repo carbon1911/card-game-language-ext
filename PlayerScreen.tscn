@@ -14,9 +14,25 @@ offset_right = 269.0
 offset_bottom = 55.0
 
 [node name="Proceed" type="Button" parent="."]
-offset_left = 529.0
-offset_top = 548.0
-offset_right = 658.0
-offset_bottom = 597.0
+offset_left = 512.0
+offset_top = 552.0
+offset_right = 640.0
+offset_bottom = 601.0
 text = "Proceed
 "
+
+[node name="Line2D3" type="Line2D" parent="."]
+visible = false
+position = Vector2(264.82, 504.82)
+points = PackedVector2Array(1.18036, -1.36682, 601.18, -1.36682)
+
+[node name="Line2D" type="Line2D" parent="."]
+visible = false
+position = Vector2(272.82, 256.82)
+points = PackedVector2Array(1.18036, -1.36682, 601.18, -1.36682)
+
+[node name="Line2D2" type="Line2D" parent="."]
+visible = false
+position = Vector2(576.82, 0.819666)
+rotation = 1.57079
+points = PackedVector2Array(1.18036, -1.36682, 601.18, -1.36682)
