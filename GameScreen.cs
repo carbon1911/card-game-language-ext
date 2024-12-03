@@ -44,9 +44,8 @@ public partial class GameScreen : Node2D
 			label.Text += $"{System.Environment.NewLine}Let's play...";
 			await ToSignal(GetTree().CreateTimer(1.0f), SceneTreeTimer.SignalName.Timeout);
 			playAgain.Visible = true;
-			return unit;
+			_gs.Swap(gs => PlayHands.Run(gs).Run().Map(o => o.State));
 		}))
-		from taskGameState2 in OptionT.lift<IO, Task<GameState>>(t.ContinueWith(_ => _gs.Swap(gs => PlayHands.Run(gs).Run().Map(o => o.State))))
 		select unit;
 
 	private static Game<Unit> InitGame(string playerName) =>
@@ -57,21 +56,43 @@ public partial class GameScreen : Node2D
 		Game.initPlayers >> PlayHand;
 
 	private Game<Unit> PlayHand =>
-		Players.with(Game.players, DealHand);
+		from _ in Players.with(Game.players, DealHand) >>
+			// Game.playRound >>
+			GameOver
+		from cardCount in Deck.cardsRemaining
+		from label in Game.lift(Optional(Label))
+		from _1 in Game.liftIO(GDExtension.deferred(() => label.Text += $"{System.Environment.NewLine}{cardCount} cards remaining in the deck"))
+		select unit;
 
 	private Game<Unit> DealHand =>
 		from cs     in DealCard >> DealCard
 		from player in Player.current
 		from state  in Player.state
-		from playerString in PlayerWrapper.playerState(player, state)
-		from cardCount in Deck.cardsRemaining
+		from playerString in Display2.PlayerState(player, state)
 		from label 	in Game.lift(Optional(Label))
-		from _		in Game.liftIO(GDExtension.deferred(() => label.Text = $"{playerString}{System.Environment.NewLine}Cards remaining: {cardCount}"))
+		from _		in Game.liftIO(GDExtension.deferred(() => label.Text = $"{playerString}{System.Environment.NewLine}"))
 		select unit;
+
+	// TODO: later
+	// static Game<Unit> playRound =>
+	// 	when(Game.isGameActive,
+	// 		from _ in Players.with(Game.activePlayers, Game.stickOrTwist) 
+	// 		from r in playRound
+	// 		select r)
+	// 		.As();
 
 	private static Game<Unit> DealCard =>
 		from card in Deck.deal
 		from _    in Player.addCard(card)
+		select unit;
+
+	private Game<Unit> GameOver =>
+		from ws in Game.winners
+		from ps in Game.playersState
+		from label in Game.lift(Optional(Label))
+		from winners in Display2.Winners(ws)
+		from playerStates in Display2.PlayerStates(ps)
+		from _  in Game.liftIO(GDExtension.deferred(() => label.Text += winners + System.Environment.NewLine + playerStates))
 		select unit;
 
 	private static Producer<Unit, Eff<MinRT>, Unit> SetUpPlayAgainEvent(Button btn) =>
