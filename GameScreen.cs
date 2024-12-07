@@ -62,6 +62,7 @@ public partial class GameScreen : Node2D
 			await ToSignal(GetTree().CreateTimer(1.0f), SceneTreeTimer.SignalName.Timeout);
 			label.Text += $"{System.Environment.NewLine}Let's play...";
 			await ToSignal(GetTree().CreateTimer(1.0f), SceneTreeTimer.SignalName.Timeout);
+			label.Text = string.Empty;
 			sat.Visible(true);
 			playAgain.Visible = false;	
 			_gs.Swap(gs => PlayHands.Run(gs).Run().Map(o => o.State));
@@ -82,12 +83,6 @@ public partial class GameScreen : Node2D
 
 	private Game<Unit> PlayHand =>
 		Players.with(Game.players, DealHand);
-		// 	playRound >>
-		// 	GameOver
-		// from cardCount in Deck.cardsRemaining
-		// from label in Game.lift(Optional(Label))
-		// from _1 in Game.liftIO(GDExtension.deferred(() => label.Text += $"{System.Environment.NewLine}{cardCount} cards remaining in the deck"))
-		// select unit;
 
 	private Game<Unit> DealHand =>
 		from cs     in DealCard >> DealCard
@@ -95,15 +90,8 @@ public partial class GameScreen : Node2D
 		from state  in Player.state
 		from playerString in Display2.PlayerState(player, state)
 		from label 	in Game.lift(Optional(Label))
-		from _		in Game.liftIO(GDExtension.deferred(() => label.Text = $"{playerString}{System.Environment.NewLine}"))
+		from _		in Game.liftIO(GDExtension.deferred(() => label.Text += $"{playerString}{System.Environment.NewLine}"))
 		select unit;
-
-	// static Game<Unit> playRound =>
-	// 	when(Game.isGameActive,
-	// 		from _ in Players.with(Game.activePlayers, Game.stickOrTwist) 
-	// 		from r in playRound
-	// 		select r)
-	// 		.As();
 
 	private static Game<Unit> DealCard =>
 		from card in Deck.deal
@@ -127,7 +115,8 @@ public partial class GameScreen : Node2D
 
 	private static Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
 		iff(Game.isGameActive,
-			Then: 	from _ in Players.with(Game.activePlayers, stickOrTwist)
+			Then: 	from currentPlayer in Player.current
+					from _ in Player.with(currentPlayer, stickOrTwist)
 					from cardCount in Deck.cardsRemaining
 					from _2 in GameOver(label) >>
 						Game.liftIO(GDExtension.deferred(() => label.Text += $"{System.Environment.NewLine}{cardCount} cards remaining in the deck"))
@@ -145,12 +134,12 @@ public partial class GameScreen : Node2D
 	private static Consumer<Unit, Eff<MinRT>, Unit> OnStickOrTwistButtonPressed(Game<Unit> operation, Atom<GameState> gameState, StickAndTwistButtons stickAndTwistButtons, Button playAgain, Label label) =>
 		from _ in Proxy.awaiting<Unit>()
 		from _1 in Pure(Run(PlayRound(operation, label, playAgain), gameState))
-		from _2 in //Pure(unless(Game.isGameActive,
+		from _2 in Pure(unless(Game.isGameActive,
 			GDExtension.deferred(() =>
 		{
 			playAgain.Visible = true;
 			stickAndTwistButtons.Visible(false);
-		})//))
+		})))
 		select unit;
 
 	private Consumer<Unit, Eff<MinRT>, Unit> OnPlayAgainButtonPressed =>
@@ -169,5 +158,9 @@ public partial class GameScreen : Node2D
 	// 	$"{nameof(GameState.Deck)}: {gameState.Deck}";
 
 	private static GameState Run<A>(Game<A> game, Atom<GameState> gameState) =>
-		gameState.Swap(gs => game.Run(gs).Run().Map(res => res.State).IfNone(() => throw new ValueIsNoneException()));
+		gameState.Swap(gs => game.Run(gs).Run().Map(res => res.State).IfNone(() =>
+		{
+			GD.Print("error");
+			throw new ValueIsNoneException();
+		}));
 }
