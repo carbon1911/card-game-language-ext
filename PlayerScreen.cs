@@ -14,10 +14,10 @@ public partial class PlayerScreen : Node2D
 	public Button? Proceed { get; set; }
 
 	[Export]
-	public TextEdit? Player1Name { get; set; }
+	public Godot.Collections.Array<TextEdit>? PlayerNames { get; set; }
 
 	[Signal]
-	public delegate void CorrectNameEventHandler(string name);
+	public delegate void CorrectNameEventHandler(Godot.Collections.Array<string> playerNames);
 
 	public override void _Ready()
 	{
@@ -26,28 +26,34 @@ public partial class PlayerScreen : Node2D
 
 	private OptionT<Eff<MinRT>, Unit> OnReady =>
 		from btn in OptionT.lift<Eff<MinRT>, Button>(Optional(Proceed))
-		from p1Name in OptionT.lift<Eff<MinRT>, TextEdit>(Optional(Player1Name))
-		from _ in OptionT.lift((SetUpProceedButtonEvent(btn, () => p1Name.Text) | Proxy.repeat(OnButtonPressed)).RunEffect().ForkIO())
+		from playerNames in OptionT.lift<Eff<MinRT>, Godot.Collections.Array<TextEdit>>(Optional(PlayerNames))
+		from _ in OptionT.lift((SetUpProceedButtonEvent(btn, playerNames.Select(playerName => fun(() => playerName.Text))) | Proxy.repeat(OnButtonPressed)).RunEffect().ForkIO())
 		select unit;
 
-	private Consumer<string, Eff<MinRT>, Unit> OnButtonPressed =>
-		from name in Proxy.awaiting<string>()
-		from _ in GDExtension.deferred(HandlePlayerName(name))
+	private Consumer<IEnumerable<string>, Eff<MinRT>, Unit> OnButtonPressed =>
+		from names in Proxy.awaiting<IEnumerable<string>>()
+		from _ in GDExtension.deferred(HandlePlayerNames(names))
 		select unit;
 
-	private IO<Unit> HandlePlayerName(string name) =>
-		iff(notEmpty(name),
-			Then: IO.lift(() =>
+	private IO<Unit> CheckDuplicities(IEnumerable<string> names) =>
+		iff(names.Distinct().SequenceEqual(names),
+			Then:  IO.lift(() =>
 			{
 				Visible = false;
-				EmitSignal(SignalName.CorrectName, name);
+				EmitSignal(SignalName.CorrectName, Variant.From(names.ToArray()).AsGodotArray<string>());
 			}),
-			Else: IO.lift(() => GD.Print("Name is empty"))).As();
+			Else: IO.lift(() => GD.Print("Player names must be unique."))
+		).As();
 
-	private static Producer<string, Eff<MinRT>, Unit> SetUpProceedButtonEvent(Button btn, Func<string> player1NameProvider) =>
+	private IO<Unit> HandlePlayerNames(IEnumerable<string> names) =>
+		iff(names.All(isEmpty),
+			Then: IO.lift(() => GD.Print("Please provide at least one player name")),
+			Else: CheckDuplicities(names)).As();
+
+	private static Producer<IEnumerable<string>, Eff<MinRT>, Unit> SetUpProceedButtonEvent(Button btn, IEnumerable<Func<string>> playerNamesProvider) =>
 		from rtime in runtime<MinRT>()
-		let queue = Proxy.Queue<Eff<MinRT>, string>()
-		from _ in GDExtension.deferred(() => btn.Pressed += () => queue.Enqueue(player1NameProvider()))
+		let queue = Proxy.Queue<Eff<MinRT>, IEnumerable<string>>()
+		from _ in GDExtension.deferred(() => btn.Pressed += () => queue.Enqueue(playerNamesProvider.Select(f => f())))
 		from result in queue
 		select result;
 }

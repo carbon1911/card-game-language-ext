@@ -2,10 +2,12 @@
 
 [ext_resource type="Script" path="res://GameScreen.cs" id="1_b2xyg"]
 
-[node name="GameScreen" type="Node2D" node_paths=PackedStringArray("Label", "PlayAgainButton")]
+[node name="GameScreen" type="Node2D" node_paths=PackedStringArray("Label", "PlayAgainButton", "StickButton", "TwistButton")]
 script = ExtResource("1_b2xyg")
 Label = NodePath("Label")
 PlayAgainButton = NodePath("Play Again")
+StickButton = NodePath("Stick")
+TwistButton = NodePath("Twist")
 
 [node name="Label" type="Label" parent="."]
 offset_left = 74.0
@@ -13,6 +15,23 @@ offset_top = 56.0
 offset_right = 165.0
 offset_bottom = 104.0
 text = "In game"
+
+[node name="Twist" type="Button" parent="."]
+visible = false
+offset_left = 732.0
+offset_top = 522.0
+offset_right = 881.0
+offset_bottom = 564.0
+text = "Twist"
+
+[node name="Stick" type="Button" parent="."]
+visible = false
+offset_left = 292.0
+offset_top = 514.0
+offset_right = 441.0
+offset_bottom = 556.0
+text = "Stick
+"
 
 [node name="Play Again" type="Button" parent="."]
 visible = false

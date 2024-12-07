@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" path="res://PlayerScreen.cs" id="1_po577"]
 
-[node name="PlayerScreen" type="Node2D" node_paths=PackedStringArray("Proceed", "Player1Name")]
+[node name="PlayerScreen" type="Node2D" node_paths=PackedStringArray("Proceed", "PlayerNames")]
 script = ExtResource("1_po577")
 Proceed = NodePath("Proceed")
-Player1Name = NodePath("Player1Name")
+PlayerNames = [NodePath("Player1Name"), NodePath("Player2Name")]
 
 [node name="Player1Name" type="TextEdit" parent="."]
 offset_left = 21.0
@@ -13,13 +13,11 @@ offset_top = 22.0
 offset_right = 269.0
 offset_bottom = 55.0
 
-[node name="Proceed" type="Button" parent="."]
-offset_left = 512.0
-offset_top = 552.0
-offset_right = 640.0
-offset_bottom = 601.0
-text = "Proceed
-"
+[node name="Player2Name" type="TextEdit" parent="."]
+offset_left = 778.0
+offset_top = 34.0
+offset_right = 1026.0
+offset_bottom = 67.0
 
 [node name="Line2D3" type="Line2D" parent="."]
 visible = false
@@ -36,3 +34,11 @@ visible = false
 position = Vector2(576.82, 0.819666)
 rotation = 1.57079
 points = PackedVector2Array(1.18036, -1.36682, 601.18, -1.36682)
+
+[node name="Proceed" type="Button" parent="."]
+offset_left = 512.0
+offset_top = 552.0
+offset_right = 640.0
+offset_bottom = 601.0
+text = "Proceed
+"
