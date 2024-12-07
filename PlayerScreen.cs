@@ -40,7 +40,7 @@ public partial class PlayerScreen : Node2D
 			Then:  IO.lift(() =>
 			{
 				Visible = false;
-				EmitSignal(SignalName.CorrectName, Variant.From(names.ToArray()).AsGodotArray<string>());
+				EmitSignal(SignalName.CorrectName, Variant.From(names.Where(s => not(isEmpty(s))).ToArray()).AsGodotArray<string>());
 			}),
 			Else: IO.lift(() => GD.Print("Player names must be unique."))
 		).As();
