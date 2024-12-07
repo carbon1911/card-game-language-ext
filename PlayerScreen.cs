@@ -2,7 +2,6 @@ using Godot;
 using LanguageExt;
 using LanguageExt.Effects;
 using LanguageExt.Pipes;
-using LanguageExt.Traits;
 using static LanguageExt.Prelude;
 
 using GD = Godot.GD;

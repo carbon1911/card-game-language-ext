@@ -9,10 +9,13 @@ namespace CardGame;
 public partial class GameScreen : Node2D
 {
 	[Export]
-	Label? Label { get; set; }
+	private Label? Label { get; set; }
 
 	[Export]
 	private Button? PlayAgainButton { get; set; }
+
+	[Export]
+	int DeckSize { get; set; } = 52;
 
 	// Not necessary so far. It becomes necessary once threads are introduced
 	private Atom<GameState> _gs = Atom(GameState.Zero);
@@ -48,9 +51,14 @@ public partial class GameScreen : Node2D
 		}))
 		select unit;
 
-	private static Game<Unit> InitGame(string playerName) =>
+	private Game<Unit> InitGame(string playerName) =>
 		Game.addPlayer(playerName) >>
-		Deck.shuffle;
+		Shuffle;
+
+	public Game<Unit> Shuffle =>
+		from deck in Deck2.Generate(() => DeckSize)
+		from _    in Deck.put(deck)
+		select unit;
 
 	private Game<Unit> PlayHands =>
 		Game.initPlayers >> PlayHand;
