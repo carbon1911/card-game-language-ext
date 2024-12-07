@@ -115,8 +115,11 @@ public partial class GameScreen : Node2D
 
 	private static Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
 		iff(Game.isGameActive,
-			Then: 	from currentPlayer in Player.current
-					from _ in Player.with(currentPlayer, stickOrTwist)
+
+			// TODO: fix here
+			// Then: 	from currentPlayer in Player.current
+			// 		from _ in Player.with(currentPlayer, stickOrTwist)
+					from _ in Players.with(Game.players, stickOrTwist)
 					from cardCount in Deck.cardsRemaining
 					from _2 in GameOver(label) >>
 						Game.liftIO(GDExtension.deferred(() => label.Text += $"{System.Environment.NewLine}{cardCount} cards remaining in the deck"))
