@@ -113,7 +113,7 @@ public partial class GameScreen : Node2D
 		from _  in Game.liftIO(GDExtension.deferred(() => label.Text += winners + System.Environment.NewLine + playerStates))
 		select unit;
 
-	private static Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
+	private static Game<Unit> PlayRound_old(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
 		iff(Game.isGameActive,
 
 			// TODO: fix here
@@ -126,6 +126,20 @@ public partial class GameScreen : Node2D
 					select unit,
 			Else: Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true))
 		).As();
+
+	private static Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
+		from _ in iff(Game.isGameActive,
+
+			// TODO: fix here
+			// Then: 	from currentPlayer in Player.current
+			// 		from _ in Player.with(currentPlayer, stickOrTwist)
+			// 		select unit,
+			Then: Players.with(Game.players, stickOrTwist),
+			Else: Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true)))
+		from cardCount in Deck.cardsRemaining
+		from _2 in GameOver(label) >>
+			Game.liftIO(GDExtension.deferred(() => label.Text += $"{System.Environment.NewLine}{cardCount} cards remaining in the deck"))
+		select unit;
 
 	private static Producer<Unit, Eff<MinRT>, Unit> SetUpPlayAgainEvent(Button btn) =>
 		from rtime in runtime<MinRT>()
