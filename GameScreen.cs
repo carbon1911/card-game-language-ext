@@ -31,9 +31,6 @@ public partial class GameScreen : Node2D
 		OnReady.Run().Run(Main.Runtime, Main.EnvIO).ThrowIfFail().Ignore();
 	}
 
-	private static OptionT<Eff<MinRT>, T> LiftUiElement<T>(T? elem) =>
-		OptionT.lift<Eff<MinRT>, T>(Optional(elem));
-
 	private OptionT<Eff<MinRT>, Unit> OnReady =>
 		from playAgain in LiftUiElement(PlayAgainButton)
 		from stickButton in LiftUiElement(StickButton)
@@ -49,7 +46,12 @@ public partial class GameScreen : Node2D
 	{
 		OnPlayerNameProvided(names).Run().As().Run().Ignore();
 	}
-	
+
+	private static OptionT<Eff<MinRT>, T> LiftUiElement<T>(T? elem) =>
+		OptionT.lift<Eff<MinRT>, T>(Optional(elem));
+
+	private static string NewLine => System.Environment.NewLine;
+
 	private OptionT<IO, Unit> OnPlayerNameProvided(Godot.Collections.Array<string> names) =>
 		from gameState in OptionT.lift<IO, GameState>(_gs.Swap(gs => InitGame(names).Run(gs).Run().Map(o => o.State)))
 		from label in OptionT.lift<IO, Label>(Optional(Label))
@@ -90,7 +92,7 @@ public partial class GameScreen : Node2D
 		from state  in Player.state
 		from playerString in Display2.PlayerState(player, state)
 		from label 	in Game.lift(Optional(Label))
-		from _		in Game.liftIO(GDExtension.deferred(() => label.Text += $"{playerString}{System.Environment.NewLine}"))
+		from _		in Game.liftIO(GDExtension.deferred(() => label.Text += $"{playerString}{NewLine}"))
 		select unit;
 
 	private static Game<Unit> DealCard =>
@@ -101,8 +103,8 @@ public partial class GameScreen : Node2D
 	private static Game<Unit> Twist(Label label) =>
 		from card in Deck.deal
 		from _    in Player.addCard(card) >> 
-					Game.liftIO(GDExtension.deferred(() => label.Text += $"\n\t{card}")) >>
-					when(Player.isBust, Game.liftIO(GDExtension.deferred(() => label.Text += $"\n\tBust!")))
+					Game.liftIO(GDExtension.deferred(() => label.Text += $"{NewLine}{card}")) >>
+					when(Player.isBust, Game.liftIO(GDExtension.deferred(() => label.Text += $"{NewLine}Bust!")))
 		select unit;
 
 	private static Game<Unit> GameOver(Label label) =>
@@ -110,7 +112,7 @@ public partial class GameScreen : Node2D
 		from ps in Game.playersState
 		from winners in Display2.Winners(ws)
 		from playerStates in Display2.PlayerStates(ps)
-		from _  in Game.liftIO(GDExtension.deferred(() => label.Text += winners + System.Environment.NewLine + playerStates))
+		from _  in Game.liftIO(GDExtension.deferred(() => label.Text += NewLine + winners + System.Environment.NewLine + playerStates))
 		select unit;
 
 	private static Game<Unit> PlayRound_old(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
