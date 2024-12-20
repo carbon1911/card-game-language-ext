@@ -8,5 +8,5 @@ public static class GDExtension
 {
 	public static IO<Unit> deferred(Action a) => lift(() => Callable.From(a).CallDeferred());
 
-	public static IO<Unit> deferred(IO<Unit> io) =>	deferred(() => io.Run());
+	public static IO<Unit> deferred<T>(IO<T> io) =>	deferred(() => io.Run());
 }
