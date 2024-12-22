@@ -2,6 +2,7 @@ using Godot;
 using LanguageExt;
 using LanguageExt.Effects;
 using LanguageExt.Pipes;
+using LanguageExt.UnsafeValueAccess;
 using static LanguageExt.Prelude;
 
 namespace CardGame;
@@ -25,6 +26,8 @@ public partial class GameScreen : Node2D
 
 	// Not necessary so far. It becomes necessary once threads are introduced
 	private Atom<GameState> _gs = Atom(GameState.Zero);
+
+	private Atom<int> _playerIndex = Atom(0);
 
 	public override void _Ready()
 	{
@@ -129,15 +132,16 @@ public partial class GameScreen : Node2D
 			Else: Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true))
 		).As();
 
-	private static Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
+	private Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
 		from _ in iff(Game.isGameActive,
-
-			// TODO: fix here
-			// Then: 	from currentPlayer in Player.current
-			// 		from _ in Player.with(currentPlayer, stickOrTwist)
-			// 		select unit,
-			Then: Players.with(Game.players, stickOrTwist),
-			Else: Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true)))
+			Then:
+				from players in Game.players
+				let currentPlayer = players.At(_playerIndex.Value)
+				from _ in Player.with(currentPlayer.ValueUnsafe(), stickOrTwist)
+				from __ in Game.LiftIO(_playerIndex.SwapIO(currentIndex => (currentIndex + 1) % players.Length))
+				select unit,
+			Else:
+				Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true)))
 		from cardCount in Deck.cardsRemaining
 		from _2 in GameOver(label) >>
 			Game.liftIO(GDExtension.deferred(() => label.Text += $"{NewLine}{cardCount} cards remaining in the deck"))
@@ -161,15 +165,11 @@ public partial class GameScreen : Node2D
 		})))
 		select unit;
 
-	private Consumer<Unit, Eff<MinRT>, Unit> OnPlayAgainButtonPressed(Button btn, Label label) =>
+	private Consumer<Unit, Eff<MinRT>, Unit> OnPlayAgainButtonPressed(Button playAgain, Label label) =>
 		from _ in Proxy.awaiting<Unit>()
+		from __ in Pure(_playerIndex.Swap(_ => 0))
 		from _1 in Pure(_gs.Swap(fun((GameState gs) => PlayHands(label).Run(gs).Run().Map(res => res.State).IfNone(() => throw new ValueIsNoneException()))))
-		from _2 in GDExtension.deferred(IO.lift(async () =>
-		{
-			btn.Disabled = true;
-			await ToSignal(GetTree().CreateTimer(1.0f), SceneTreeTimer.SignalName.Timeout);
-			btn.Disabled = false;
-		}))
+		from _2 in GDExtension.deferred(() => playAgain.Visible = false)
 		select unit;
 
 	// private static string GameStateToString(GameState gameState) =>
