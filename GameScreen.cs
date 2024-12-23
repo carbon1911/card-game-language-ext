@@ -40,7 +40,7 @@ public partial class GameScreen : Node2D
 		from twistButton in LiftUiElement(TwistButton)
 		from label in LiftUiElement(Label)
 		let sat = new StickAndTwistButtons(stickButton, twistButton)
-		from _1 in OptionT.lift((SetUpPlayAgainEvent(playAgain) | Proxy.repeat(OnPlayAgainButtonPressed(playAgain, label))).RunEffect().ForkIO())
+		from _1 in OptionT.lift((SetUpPlayAgainEvent(playAgain) | Proxy.repeat(OnPlayAgainButtonPressed(playAgain, label, sat))).RunEffect().ForkIO())
 		from _2 in OptionT.lift((SetUpPlayAgainEvent(stickButton) | Proxy.repeat(OnStickOrTwistButtonPressed(Player.stick, sat, playAgain, label))).RunEffect().ForkIO())
 		from _3 in OptionT.lift((SetUpPlayAgainEvent(twistButton) | Proxy.repeat(OnStickOrTwistButtonPressed(Twist(label), sat, playAgain, label))).RunEffect().ForkIO())
 		select unit;
@@ -115,30 +115,29 @@ public partial class GameScreen : Node2D
 		from ps in Game.playersState
 		from winners in Display2.Winners(ws)
 		from playerStates in Display2.PlayerStates(ps)
-		from _  in Game.liftIO(GDExtension.deferred(() => label.Text += NewLine + winners + System.Environment.NewLine + playerStates))
+		from _  in Game.liftIO(GDExtension.deferred(() => label.Text += NewLine + winners + NewLine + playerStates))
 		select unit;
 
-	private static Game<Unit> PlayRound_old(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
-		iff(Game.isGameActive,
-
-			// TODO: fix here
-			// Then: 	from currentPlayer in Player.current
-			// 		from _ in Player.with(currentPlayer, stickOrTwist)
-					from _ in Players.with(Game.players, stickOrTwist)
-					from cardCount in Deck.cardsRemaining
-					from _2 in GameOver(label) >>
-						Game.liftIO(GDExtension.deferred(() => label.Text += $"{System.Environment.NewLine}{cardCount} cards remaining in the deck"))
-					select unit,
-			Else: Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true))
-		).As();
-
-	private Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain) =>
+	private Game<Unit> PlayRound(Game<Unit> stickOrTwist, Label label, Button playAgain, StickAndTwistButtons stickAndTwistButtons) =>
 		from _ in iff(Game.isGameActive,
 			Then:
-				from players in Game.players
+				from players in Game.activePlayers
 				let currentPlayer = players.At(_playerIndex.Value)
-				from _ in Player.with(currentPlayer.ValueUnsafe(), stickOrTwist)
-				from __ in Game.LiftIO(_playerIndex.SwapIO(currentIndex => (currentIndex + 1) % players.Length))
+				from _1 in Player.setCurrent(currentPlayer)
+				from cp in Player.current
+				from _ in Player.with(cp, stickOrTwist)
+				from aps in Game.activePlayers
+				let increaseIds = Game.LiftIO(_playerIndex.SwapIO(currentIndex => aps.Length switch
+				{
+					0 => currentIndex,
+					_ => (currentIndex + 1) % aps.Length
+				})).IgnoreF()
+				from _2 in unless(aps.AsEnumerable().Contains(cp), increaseIds)
+				from _3 in unless(Game.isGameActive, Game.LiftIO(GDExtension.deferred(() =>
+				{
+					playAgain.Visible = true;
+					stickAndTwistButtons.Visible(false);
+				})))
 				select unit,
 			Else:
 				Game.LiftIO(GDExtension.deferred(() => playAgain.Visible = true)))
@@ -156,20 +155,20 @@ public partial class GameScreen : Node2D
 
 	private Consumer<Unit, Eff<MinRT>, Unit> OnStickOrTwistButtonPressed(Game<Unit> operation, StickAndTwistButtons stickAndTwistButtons, Button playAgain, Label label) =>
 		from _ in Proxy.awaiting<Unit>()
-		from _1 in Pure(Run(PlayRound(operation, label, playAgain), _gs))
-		from _2 in Pure(unless(Game.isGameActive,
-			GDExtension.deferred(() =>
-		{
-			playAgain.Visible = true;
-			stickAndTwistButtons.Visible(false);
-		})))
+		from _1 in Pure(Run(PlayRound(operation, label, playAgain, stickAndTwistButtons), _gs))
 		select unit;
 
-	private Consumer<Unit, Eff<MinRT>, Unit> OnPlayAgainButtonPressed(Button playAgain, Label label) =>
+	private Consumer<Unit, Eff<MinRT>, Unit> OnPlayAgainButtonPressed(Button playAgain, Label label, StickAndTwistButtons stickAndTwistButtons) =>
 		from _ in Proxy.awaiting<Unit>()
 		from __ in Pure(_playerIndex.Swap(_ => 0))
 		from _1 in Pure(_gs.Swap(fun((GameState gs) => PlayHands(label).Run(gs).Run().Map(res => res.State).IfNone(() => throw new ValueIsNoneException()))))
-		from _2 in GDExtension.deferred(() => playAgain.Visible = false)
+
+		// TODO: I guess the IO should happen elsewhere, the Consumers should remain thin (also because I can't quite work well in the Concumser monad stack or whatever that is)
+		from _2 in GDExtension.deferred(() =>
+		{
+			stickAndTwistButtons.Visible(true);
+			playAgain.Visible = false;
+		})
 		select unit;
 
 	// private static string GameStateToString(GameState gameState) =>
